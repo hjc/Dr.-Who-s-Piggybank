@@ -13,7 +13,7 @@ while 1:
     print 'Waiting for Connection....'
     conn, addr = s.accept()
     print 'Connected by', addr
-    workingdir = r'C:\Python27'
+    workingdir = os.curdir
     
     while 1:
         data = conn.recv(1024)
