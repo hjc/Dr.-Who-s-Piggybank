@@ -1,5 +1,5 @@
 from socket import *
-
+#purposes
 tcpCliSock = socket(AF_INET, SOCK_STREAM)
 while 1:
     HOST = raw_input("Please enter a host name or exit to terminate the client.\n")
