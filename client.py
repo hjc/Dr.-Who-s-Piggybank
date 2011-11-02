@@ -19,17 +19,23 @@ while 1:
         print 'connected to: ' + HOST + ' on ' + str(PORT)
 
     except error as e:
-        print e
+        #print e
         print "cannot connect to " + HOST + ' on ' + str(PORT)
         continue
     while 1:
-        data = raw_input()
+        data = raw_input('Enter a command')
 
         tcpCliSock.send(data)
         
         if data == 'exit':
             break
         
+        has_data = True
+        #while has_data:
+         #   print '1'
         new_dat = tcpCliSock.recv(BUFSIZ)
-        print new_dat
+        #    if new_dat == None or new_dat == '' or new_dat == 0:
+         #       break
+        print new_dat , 'is new data'
+        #print 'out'
     tcpCliSock.close()
