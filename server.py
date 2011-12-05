@@ -1,3 +1,103 @@
+from Crypto.Cipher import AES
+import os,random, struct
+import zlib
+
+def encrypt_file(in_filename, out_filename=None, chunksize=64*1024):
+    """ Encrypts a file using AES (CBC mode) with the
+        given key.
+
+        key:
+            The encryption key - a string that must be
+            either 16, 24 or 32 bytes long. Longer keys
+            are more secure.
+
+        in_filename:
+            Name of the input file
+
+        out_filename:
+            If None, '<in_filename>.enc' will be used.
+
+        chunksize:
+            Sets the size of the chunk which the function
+            uses to read and encrypt the file. Larger chunk
+            sizes can be faster for some files and machines.
+            chunksize must be divisible by 16.
+    """
+    
+    key = '86309lonh6bdcx34'
+    
+    if not out_filename:
+        out_filename = in_filename + '.enc'
+
+    iv = ''.join(chr(random.randint(0, 0xFF)) for i in range(16))
+    encryptor = AES.new(key, AES.MODE_CBC, iv)
+    filesize = os.path.getsize(in_filename)
+
+    with open(in_filename, 'rb') as infile:
+        with open(out_filename, 'wb') as outfile:
+            outfile.write(struct.pack('<Q', filesize))
+            outfile.write(iv)
+
+            while True:
+                chunk = infile.read(chunksize)
+                if len(chunk) == 0:
+                    break
+                elif len(chunk) % 16 != 0:
+                    chunk += ' ' * (16 - len(chunk) % 16)
+
+                outfile.write(encryptor.encrypt(chunk))
+
+def decrypt_file(in_filename, out_filename=None, chunksize=24*1024):
+    """ Decrypts a file using AES (CBC mode) with the
+        given key. Parameters are similar to encrypt_file,
+        with one difference: out_filename, if not supplied
+        will be in_filename without its last extension
+        (i.e. if in_filename is 'aaa.zip.enc' then
+        out_filename will be 'aaa.zip')
+    """
+    key = '86309lonh6bdcx34'
+    
+    if not out_filename:
+        out_filename = os.path.splitext(in_filename)[0]
+
+    with open(in_filename, 'rb') as infile:
+        origsize = struct.unpack('<Q', infile.read(struct.calcsize('Q')))[0]
+        iv = infile.read(16)
+        decryptor = AES.new(key, AES.MODE_CBC, iv)
+
+        with open(out_filename, 'wb') as outfile:
+            while True:
+                chunk = infile.read(chunksize)
+                if len(chunk) == 0:
+                    break
+                outfile.write(decryptor.decrypt(chunk))
+
+            outfile.truncate(origsize)
+
+def compress_file(in_filename):
+    f = open(in_filename,"r")
+    string = f.read()
+    f.close()
+    compr = zlib.compress(string)
+    output = open(in_filename,"w")
+    output.write(compr)
+    output.close()
+    return compr
+        
+def decompress_file(in_filename):
+    f = open(in_filename,"r")
+    string = f.read()
+    f.close()
+    decomp = zlib.decompress(string)
+    output = open(in_filename,"w")
+    output.write(decomp)
+    output.close()
+    return decomp
+
+
+
+
+
 def get_file_name(path):
     name = ''
     for i in range(len(path) - 1, -1, -1):
@@ -48,6 +148,11 @@ while 1:
             conn.send('entry')
     
     print 'Connected by', addr
+    
+    ENCRYPT = False
+    COMPRESS = False
+    BINARY = False
+    
     workingdir = os.curdir
     
     while 1:
@@ -184,27 +289,26 @@ while 1:
                 conn.send(sender)
                 conn.send('>>>~~FILE~~DONE~~<<<')
                 
-                
-                                               
-#            try:
-#                f_open = open(f).read()
-#            except:
-#                print 'Error ' + f + ' not found'
-#                conn.send('Error ' + f + ' not found')
-#                continue
-#            if (f[0] != '\\' and f[0] != '/' and f[0] != 'C'):
-#                if (os.name == 'nt'):
-#                    file_path = os.getcwd() + '\\' + f
-#                else:
-#                    file_path = os.getcwd() + '/' + f
-#            else:
-#                file_path = f
-#            fd = 'get FN:' + f
-#            conn.send(fd)
-#            conn.send(f_open)
-#            conn.send('>>>~~FILE~~DONE~~<<<')
-#            
-#            print f + ' successfully sent'
+        elif data == 'compress':
+            if COMPRESS:
+                COMPRESS = False
+                print 'Compression disabled'
+            else:
+                COMPRESS = True
+                print 'Compression enabled'
+        
+        elif data == 'encrypt':
+            if ENCRYPT:
+                ENCRYPT = False
+                print 'Encryption disabled'
+            else:
+                ENCRYPT = True
+                print 'Encryption enabled'
+                            
+        elif data == 'normal':
+            ENCRYPT = False
+            COMPRESS = False
+            print 'Compression and Encryption disabled'
             
     conn.close()
     print 'Disconnected by', addr
