@@ -120,6 +120,12 @@ splitter = re.compile('\!@\!')
 
 while 1:
     tcpCliSock = socket(AF_INET, SOCK_STREAM)
+    #Support for inputting host names and ports one on line, like so:
+    #10.11.11.226:50007
+    #connect_string = raw_input("Please enter a host name and port like so: hostname:port.")
+    #pieces = connect_string.split(':')
+    #HOST = pieces[0]
+    #PORT = pieces[1]
     HOST = raw_input("Please enter a host name or exit to terminate the client.\n")
     HOST = gethostbyname(HOST)
 
