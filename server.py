@@ -32,11 +32,14 @@ def encrypt_file(in_filename, out_filename=None, chunksize=64*1024):
     iv = ''.join(chr(random.randint(0, 0xFF)) for i in range(16))
     encryptor = AES.new(key, AES.MODE_CBC, iv)
     filesize = os.path.getsize(in_filename)
+    #filesize = len(in_filename)
 
     with open(in_filename, 'rb') as infile:
         with open(out_filename, 'wb') as outfile:
             outfile.write(struct.pack('<Q', filesize))
             outfile.write(iv)
+            
+            the_string = ''
 
             while True:
                 chunk = infile.read(chunksize)
@@ -44,8 +47,10 @@ def encrypt_file(in_filename, out_filename=None, chunksize=64*1024):
                     break
                 elif len(chunk) % 16 != 0:
                     chunk += ' ' * (16 - len(chunk) % 16)
+                the_string += encryptor.encrypt(chunk)
 
-                outfile.write(encryptor.encrypt(chunk))
+                #outfile.write(encryptor.encrypt(chunk))
+            return(the_string)
 
 def decrypt_file(in_filename, out_filename=None, chunksize=24*1024):
     """ Decrypts a file using AES (CBC mode) with the
@@ -60,38 +65,44 @@ def decrypt_file(in_filename, out_filename=None, chunksize=24*1024):
     if not out_filename:
         out_filename = os.path.splitext(in_filename)[0]
 
-    with open(in_filename, 'rb') as infile:
-        origsize = struct.unpack('<Q', infile.read(struct.calcsize('Q')))[0]
-        iv = infile.read(16)
-        decryptor = AES.new(key, AES.MODE_CBC, iv)
+#    with open(in_filename, 'rb') as infile:
+#        origsize = struct.unpack('<Q', infile.read(struct.calcsize('Q')))[0]
+#        iv = infile.read(16)
+    decryptor = AES.new(key, AES.MODE_CBC)
+#
+#        with open(out_filename, 'wb') as outfile:
+#            the_string = ''
+#            while True:
+#                chunk = infile.read(chunksize)
+#                if len(chunk) == 0:
+#                    break
+    the_string = decryptor.decrypt(in_filename)
+            
+#            the_string.truncate(origsize)
+    return the_string
+                
+                #outfile.write(decryptor.decrypt(chunk))
 
-        with open(out_filename, 'wb') as outfile:
-            while True:
-                chunk = infile.read(chunksize)
-                if len(chunk) == 0:
-                    break
-                outfile.write(decryptor.decrypt(chunk))
-
-            outfile.truncate(origsize)
+            #outfile.truncate(origsize)
 
 def compress_file(in_filename):
-    f = open(in_filename,"r")
-    string = f.read()
-    f.close()
-    compr = zlib.compress(string)
-    output = open(in_filename,"w")
-    output.write(compr)
-    output.close()
+    #f = open(in_filename,"r")
+    #string = f.read()
+    #f.close()
+    compr = zlib.compress(in_filename)
+    #output = open(in_filename,"w")
+    #output.write(compr)
+    #output.close()
     return compr
         
-def decompress_file(in_filename):
-    f = open(in_filename,"r")
-    string = f.read()
-    f.close()
-    decomp = zlib.decompress(string)
-    output = open(in_filename,"w")
-    output.write(decomp)
-    output.close()
+def decompress_file(in_string):
+    #f = open(in_filename,"r")
+    #string = f.read()
+    #f.close()
+    decomp = zlib.decompress(in_string)
+    #output = open(in_filename,"w")
+    #output.write(decomp)
+    #output.close()
     return decomp
 
 
@@ -191,6 +202,10 @@ while 1:
                     done = True
                 
                 f += dat
+            if ENCRYPT:
+                f = decrypt_file(f)
+            if COMPRESS:
+                f = decompress_file(f)
             stor = open(fn,'w')
             stor.write(f)
             stor.close()
@@ -213,6 +228,10 @@ while 1:
                 file_path = f
             fd = 'get FN:' + f
             conn.send(fd)
+            if COMPRESS:
+                print 'Length of file before compression: ', len(f_open)
+                f_open = compress_file(f_open)
+                print 'Length of file after compression: ', len(f_open)
             conn.send(f_open)
             conn.send('>>>~~FILE~~DONE~~<<<')
             
@@ -241,6 +260,8 @@ while 1:
                         done = True
                     
                     f += dat
+                if COMPRESS:
+                    f = decompress_file(f) 
                 stor = open(fn,'w')
                 stor.write(f)
                 stor.close()
@@ -283,8 +304,13 @@ while 1:
                     and moving on.'
                 
                 file_descriptor = 'get FN:' + get_file_name(file_path)
+                fn = get_file_name(file_path)
                 print file_descriptor
                 conn.send(file_descriptor)
+                if COMPRESS:
+                    print 'Length of file: ', fn, 'is:', len(sender), 'before compression: '
+                    sender = compress_file(sender)
+                    print 'Length of file: ', fn, 'is:', len(sender), 'after compression: '
                 
                 conn.send(sender)
                 conn.send('>>>~~FILE~~DONE~~<<<')
