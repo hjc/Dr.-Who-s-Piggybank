@@ -2,6 +2,9 @@ from Crypto.Cipher import AES
 import random, struct
 import zlib
 
+#ON SERVER GO INTO GET AND MGET AND ADD CHECKS FOR . AS
+#FILE_PATH[0]
+
 def encrypt_file(in_filename, out_filename=None, chunksize=64*1024):
     """ Encrypts a file using AES (CBC mode) with the
         given key.
@@ -170,18 +173,21 @@ while 1:
         
         else:    
             data = raw_input('Enter a command ')
-            
+
+        #LS
             if data[0:2] == 'ls':
                 tcpCliSock.send(data)
                 new_dat = tcpCliSock.recv(BUFSIZ)
                 print new_dat
-                
+
+        #CD     
             elif data[0:2] == 'cd':
                 tcpCliSock.send(data)
 
+        #PUT
             elif data[0:3] == 'put':
                 file_path = data.replace(' ', '')[3:]
-                if (file_path[0] != "\\" and file_path[0] != "/" and file_path[0] != 'C'):
+                if (file_path[0] != "\\" and file_path[0] != "/" and file_path[0] != 'C' and file_path[0] != '.'):
                     if (os.name == 'nt'):
                         file_path = os.getcwd() + '\\' + file_path
                     else:
@@ -211,7 +217,8 @@ while 1:
                 tcpCliSock.send(sender)
                 tcpCliSock.send('>>>~~FILE~~DONE~~<<<')
                 
-            
+
+        #GET
             elif data[0:3] == 'get':
                 file_wanted = data[4:]
                 fd = 'get FN:' + file_wanted
@@ -254,7 +261,9 @@ while 1:
                     
                     print fn + ' received successfully'
                     #print file_data
-            
+
+
+        #MPUT
             elif data[0:4] == 'mput':
                 files = data[5:]
                 if files[-1] == '*':
@@ -304,7 +313,7 @@ while 1:
                     #sender = open(files[i])
                     file_path = files[i]
                     #file_path = file_paths[i] TEST THIS
-                    if (file_path[0] != "\\" and file_path[0] != "/" and file_path[0] != 'C'):
+                    if (file_path[0] != "\\" and file_path[0] != "/" and file_path[0] != 'C' and file_path[0] != '.'):
                         if (os.name == 'nt'):
                             file_path = os.getcwd() + '\\' + file_path
                         else:
@@ -330,7 +339,9 @@ while 1:
                     tcpCliSock.send(sender)
                     tcpCliSock.send('>>>~~FILE~~DONE~~<<<')
                     #send sender
-                    
+
+
+        #MGET
             elif data[0:4] == 'mget':
                 files = data[0:5]
                 tcpCliSock.send(data)
@@ -369,7 +380,8 @@ while 1:
                     stor.close()
                     print fn, 'successfully received.'
                 
-            
+
+        #COMPRESS
             elif data == 'compress':
                 tcpCliSock.send(data)
                 if COMPRESS:
@@ -378,7 +390,9 @@ while 1:
                 else:
                     COMPRESS = True
                     print 'Compression enabled'
-                    
+
+
+        #ENCRYPT   
             elif data == 'encrypt':
                 tcpCliSock.send(data)
                 if ENCRYPT:
@@ -387,11 +401,17 @@ while 1:
                 else:
                     ENCRYPT = True
                     print 'Encryption enabled'
-                    
+
+
+        #NORMAL      
             elif data == 'normal':
                 tcpCliSock.send(data)
                 COMPRESS = False
                 ENCRYPT = False
+                print 'Encryption and compression disabled'
+
+
+        #EXIT
             #needs to become quit
             elif data == 'exit':
                 tcpCliSock.send(data)
@@ -408,4 +428,4 @@ while 1:
          #       break
         #print new_dat , 'is new data'
         #print 'out'
-    tcpCliSock.close()
+    tcpCliSock.close()
