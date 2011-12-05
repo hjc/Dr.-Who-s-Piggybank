@@ -202,7 +202,7 @@ while 1:
         #while has_data:
          #   print '1'
         #new_dat = tcpCliSock.recv(BUFSIZ)
-        
+        #
 
             
         #    if new_dat == None or new_dat == '' or new_dat == 0:
