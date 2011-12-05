@@ -278,6 +278,21 @@ while 1:
                 else:
                     files = files.split()
                 
+                #TEST THIS
+#                file_paths = []
+#                for i in range(0, len(files)):
+#                    file_path = files[i]
+#                    if (file_path[0] != "\\" and file_path[0] != "/" and file_path[0] != 'C'):
+#                        if (os.name == 'nt'):
+#                            file_path = os.getcwd() + '\\' + file_path
+#                        else:
+#                            file_path = os.getcwd() + '/' + file_path
+#                    try:
+#                        test = os.stat(file_path)
+#                    except:
+#                        continue
+#                    file_paths.append(file_path)
+                
                 fd = 'mput FILES:' + str(len(files))
                 tcpCliSock.send(fd)
                 #print files
@@ -287,6 +302,7 @@ while 1:
                     tcpCliSock.recv(BUFSIZ)
                     #sender = open(files[i])
                     file_path = files[i]
+                    #file_path = file_paths[i] TEST THIS
                     if (file_path[0] != "\\" and file_path[0] != "/" and file_path[0] != 'C'):
                         if (os.name == 'nt'):
                             file_path = os.getcwd() + '\\' + file_path
