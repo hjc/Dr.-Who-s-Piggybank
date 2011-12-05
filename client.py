@@ -150,6 +150,7 @@ while 1:
             user_name = raw_input("Please enter a user name: ")
             pw = getpass.getpass()
             
+            #remember to encrypt pw!
             user_string = 'USER:' + user_name + '!@!PASSWORD:' + pw 
             
             tcpCliSock.send(user_string)
