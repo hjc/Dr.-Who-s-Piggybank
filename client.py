@@ -80,7 +80,7 @@ while 1:
             #preparing for put
             elif data[0:3] == 'put':
                 file_path = data.replace(' ', '')[3:]
-                if (file_path[0] != "\\" and file_path[0] != "/"):
+                if (file_path[0] != "\\" and file_path[0] != "/" and file_path[0] != 'C'):
                     if (os.name == 'nt'):
                         file_path = os.getcwd() + '\\' + file_path
                     else:
@@ -146,7 +146,7 @@ while 1:
                     if not file_path.strip():
                         file_path = os.getcwd()
                     contents = os.listdir(file_path)
-                    print contents
+                    #print contents
                     files = []
                     for i in range(0, len(contents)):
                         if (os.name == 'nt'):
@@ -165,14 +165,14 @@ while 1:
                 
                 fd = 'mput FILES:' + str(len(files))
                 tcpCliSock.send(fd)
-                print files
+                #print files
                 
                 #now send all files
                 for i in range(0, len(files)):
                     tcpCliSock.recv(BUFSIZ)
                     sender = open(files[i])
                     file_path = files[i]
-                    if (file_path[0] != "\\" and file_path[0] != "/"):
+                    if (file_path[0] != "\\" and file_path[0] != "/" and file_path[0] != 'C'):
                         if (os.name == 'nt'):
                             file_path = os.getcwd() + '\\' + file_path
                         else:
@@ -192,6 +192,41 @@ while 1:
                     tcpCliSock.send(sender)
                     tcpCliSock.send('>>>~~FILE~~DONE~~<<<')
                     #send sender
+                    
+            elif data[0:4] == 'mget':
+                files = data[0:5]
+                tcpCliSock.send(data)
+                
+                data = tcpCliSock.recv(BUFSIZ)
+                fnum = data[11:]
+                
+                for i in range(0, int(fnum)):
+                    tcpCliSock.send('begin transfer number: ' + str(i))
+                    
+                    data = tcpCliSock.recv(BUFSIZ)
+                    
+                    pieces = splitter.split(data)
+                    fn = pieces[0][7:]
+                    
+                    if '.' not in fn:
+                        fn += '.txt'
+                        
+                    f = ''
+                    done = False
+                    
+                    while(not done):
+                        dat = tcpCliSock.recv(BUFSIZ)
+                        
+                        if ('>>>~~FILE~~DONE~~<<<' in dat):
+                            done = True
+                            dat = dat.replace('>>>~~FILE~~DONE~~<<<', '')
+                            
+                        f += dat
+                    stor = open(fn, 'w')
+                    stor.write(f)
+                    stor.close()
+                    print fn, 'successfully received.'
+                
             
             #needs to become quit
             elif data == 'exit':
