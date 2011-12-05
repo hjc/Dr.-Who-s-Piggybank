@@ -1,7 +1,17 @@
+def get_file_name(path):
+    name = ''
+    for i in range(len(path) - 1, -1, -1):
+        if (path[i] == '/' or path[i] == '\\'):
+            break
+        name += path[i]
+    return name[::-1]
+
 # Echo server program
 import socket
 import os
 import re
+from math import ceil
+from stat import *
 
 HOST = socket.gethostbyname(socket.gethostname())
 PORT = 50007
@@ -65,19 +75,136 @@ while 1:
             fn = pieces[0][7:]
             if '.' not in fn:
                 fn += '.txt'
-            packets = pieces[1][8:]
             f = ''
-            for i in range(0,int(packets)):
-                f += conn.recv(buffsize)
+            done = False
+            while (not done):
+                dat = conn.recv(buffsize)
+                
+                if ('>>>~~FILE~~DONE~~<<<' in dat):
+                    dat = dat.replace('>>>~~FILE~~DONE~~<<<', '')
+                    f.rstrip('>>>~~FILE~~DONE~~<<<')
+                    done = True
+                
+                f += dat
             stor = open(fn,'w')
             stor.write(f)
             stor.close()
             print fn + ' successfully received'
             
         elif data[0:3] == 'get':
+            f = data[7:]
+            try:
+                f_open = open(f).read()
+            except:
+                print 'Error ' + f + ' not found'
+                conn.send('Error ' + f + ' not found')
+                continue
+            if (f[0] != '\\' and f[0] != '/' and f[0] != 'C'):
+                if (os.name == 'nt'):
+                    file_path = os.getcwd() + '\\' + f
+                else:
+                    file_path = os.getcwd() + '/' + f
+            else:
+                file_path = f
+            fd = 'get FN:' + f
+            conn.send(fd)
+            conn.send(f_open)
+            conn.send('>>>~~FILE~~DONE~~<<<')
             
+            print f + ' successfully sent'
+        
+        elif data[0:4] == 'mput':
+            fnum = data[11:]
             
-            print fn + ' successfully sent'
-        #conn.send(data)
+            for i in range(0,int(fnum)):
+                conn.send('begin transfer number: ' + str(i))
+                data = conn.recv(buffsize)
+                print data
+                pieces = user_split.split(data)
+                fn = pieces[0][7:]
+                print fn
+                if '.' not in fn:
+                    fn += '.txt'
+                f = ''
+                done = False
+                while (not done):
+                    dat = conn.recv(buffsize)
+                    
+                    if ('>>>~~FILE~~DONE~~<<<' in dat):
+                        dat = dat.replace('>>>~~FILE~~DONE~~<<<', '')
+                        #f.rstrip('>>>~~FILE~~DONE~~<<<')
+                        done = True
+                    
+                    f += dat
+                stor = open(fn,'w')
+                stor.write(f)
+                stor.close()
+                print fn + ' successfully received'
+        
+        elif data[0:4] == 'mget':
+            files = data[5:]
+            if files[-1]=='*':
+                file_path= files[:-1]
+                if not file_path.strip():
+                    file_path = os.getcwd()
+                contents = os.listdir(file_path)
+                files = []
+                for i in range(0,len(contents)):
+                    if os.name == 'nt':
+                        this_path=file_path + '\\' + contents[i]
+                    else:
+                        this_path=file_path + '/' + contents[i]
+                    mode=os.stat(this_path).st_mode
+                    if not S_ISDIR(mode):
+                        files.append(this_path)
+            else:
+                files=files.split()
+            fd='mget FILES:' + str(len(files))
+            conn.send(fd)
+            
+            for i in range (0,len(files)):
+                conn.recv(buffsize)
+                sender = open(files[i])
+                file_path = files[i]
+                if (file_path[0] != "\\" and file_path[0] != '/' and file_path[0] != 'C'):
+                    if (os.name== 'nt'):
+                        file_path = os.getcwd() + '\\' + file_path
+                    else:
+                        file_path = os.getcwd() + '/' + file_path
+                try:
+                    sender = open(file_path).read()
+                except:
+                    print 'File located at: ' + file_path + ' not found.  Ignoring \
+                    and moving on.'
+                
+                file_descriptor = 'get FN:' + get_file_name(file_path)
+                print file_descriptor
+                conn.send(file_descriptor)
+                
+                conn.send(sender)
+                conn.send('>>>~~FILE~~DONE~~<<<')
+                
+                
+                                               
+#            try:
+#                f_open = open(f).read()
+#            except:
+#                print 'Error ' + f + ' not found'
+#                conn.send('Error ' + f + ' not found')
+#                continue
+#            if (f[0] != '\\' and f[0] != '/' and f[0] != 'C'):
+#                if (os.name == 'nt'):
+#                    file_path = os.getcwd() + '\\' + f
+#                else:
+#                    file_path = os.getcwd() + '/' + f
+#            else:
+#                file_path = f
+#            fd = 'get FN:' + f
+#            conn.send(fd)
+#            conn.send(f_open)
+#            conn.send('>>>~~FILE~~DONE~~<<<')
+#            
+#            print f + ' successfully sent'
+            
     conn.close()
     print 'Disconnected by', addr
