@@ -1,90 +1,90 @@
-from Crypto.Cipher import AES
-import os,random, struct
+#from Crypto.Cipher import AES
+#import os,random, struct
 import zlib
-
-def encrypt_file(in_filename, out_filename=None, chunksize=64*1024):
-    """ Encrypts a file using AES (CBC mode) with the
-        given key.
-
-        key:
-            The encryption key - a string that must be
-            either 16, 24 or 32 bytes long. Longer keys
-            are more secure.
-
-        in_filename:
-            Name of the input file
-
-        out_filename:
-            If None, '<in_filename>.enc' will be used.
-
-        chunksize:
-            Sets the size of the chunk which the function
-            uses to read and encrypt the file. Larger chunk
-            sizes can be faster for some files and machines.
-            chunksize must be divisible by 16.
-    """
-    
-    key = '86309lonh6bdcx34'
-    
-    if not out_filename:
-        out_filename = in_filename + '.enc'
-
-    iv = ''.join(chr(random.randint(0, 0xFF)) for i in range(16))
-    encryptor = AES.new(key, AES.MODE_CBC, iv)
-    filesize = os.path.getsize(in_filename)
-    #filesize = len(in_filename)
-
-    with open(in_filename, 'rb') as infile:
-        with open(out_filename, 'wb') as outfile:
-            outfile.write(struct.pack('<Q', filesize))
-            outfile.write(iv)
-            
-            the_string = ''
-
-            while True:
-                chunk = infile.read(chunksize)
-                if len(chunk) == 0:
-                    break
-                elif len(chunk) % 16 != 0:
-                    chunk += ' ' * (16 - len(chunk) % 16)
-                the_string += encryptor.encrypt(chunk)
-
-                #outfile.write(encryptor.encrypt(chunk))
-            return(the_string)
-
-def decrypt_file(in_filename, out_filename=None, chunksize=24*1024):
-    """ Decrypts a file using AES (CBC mode) with the
-        given key. Parameters are similar to encrypt_file,
-        with one difference: out_filename, if not supplied
-        will be in_filename without its last extension
-        (i.e. if in_filename is 'aaa.zip.enc' then
-        out_filename will be 'aaa.zip')
-    """
-    key = '86309lonh6bdcx34'
-    
-    if not out_filename:
-        out_filename = os.path.splitext(in_filename)[0]
-
-#    with open(in_filename, 'rb') as infile:
-#        origsize = struct.unpack('<Q', infile.read(struct.calcsize('Q')))[0]
-#        iv = infile.read(16)
-    decryptor = AES.new(key, AES.MODE_CBC)
 #
+#def encrypt_file(in_filename, out_filename=None, chunksize=64*1024):
+#    """ Encrypts a file using AES (CBC mode) with the
+#        given key.
+#
+#        key:
+#            The encryption key - a string that must be
+#            either 16, 24 or 32 bytes long. Longer keys
+#            are more secure.
+#
+#        in_filename:
+#            Name of the input file
+#
+#        out_filename:
+#            If None, '<in_filename>.enc' will be used.
+#
+#        chunksize:
+#            Sets the size of the chunk which the function
+#            uses to read and encrypt the file. Larger chunk
+#            sizes can be faster for some files and machines.
+#            chunksize must be divisible by 16.
+#    """
+#    
+#    key = '86309lonh6bdcx34'
+#    
+#    if not out_filename:
+#        out_filename = in_filename + '.enc'
+#
+#    iv = ''.join(chr(random.randint(0, 0xFF)) for i in range(16))
+#    encryptor = AES.new(key, AES.MODE_CBC, iv)
+#    filesize = os.path.getsize(in_filename)
+#    #filesize = len(in_filename)
+#
+#    with open(in_filename, 'rb') as infile:
 #        with open(out_filename, 'wb') as outfile:
+#            outfile.write(struct.pack('<Q', filesize))
+#            outfile.write(iv)
+#            
 #            the_string = ''
+#
 #            while True:
 #                chunk = infile.read(chunksize)
 #                if len(chunk) == 0:
 #                    break
-    the_string = decryptor.decrypt(in_filename)
-            
-#            the_string.truncate(origsize)
-    return the_string
-                
-                #outfile.write(decryptor.decrypt(chunk))
-
-            #outfile.truncate(origsize)
-
+#                elif len(chunk) % 16 != 0:
+#                    chunk += ' ' * (16 - len(chunk) % 16)
+#                the_string += encryptor.encrypt(chunk)
+#
+#                #outfile.write(encryptor.encrypt(chunk))
+#            return(the_string)
+#
+#def decrypt_file(in_filename, out_filename=None, chunksize=24*1024):
+#    """ Decrypts a file using AES (CBC mode) with the
+#        given key. Parameters are similar to encrypt_file,
+#        with one difference: out_filename, if not supplied
+#        will be in_filename without its last extension
+#        (i.e. if in_filename is 'aaa.zip.enc' then
+#        out_filename will be 'aaa.zip')
+#    """
+#    key = '86309lonh6bdcx34'
+#    
+#    if not out_filename:
+#        out_filename = os.path.splitext(in_filename)[0]
+#
+##    with open(in_filename, 'rb') as infile:
+##        origsize = struct.unpack('<Q', infile.read(struct.calcsize('Q')))[0]
+##        iv = infile.read(16)
+#    decryptor = AES.new(key, AES.MODE_CBC)
+##
+##        with open(out_filename, 'wb') as outfile:
+##            the_string = ''
+##            while True:
+##                chunk = infile.read(chunksize)
+##                if len(chunk) == 0:
+##                    break
+#    the_string = decryptor.decrypt(in_filename)
+#            
+##            the_string.truncate(origsize)
+#    return the_string
+#                
+#                #outfile.write(decryptor.decrypt(chunk))
+#
+#            #outfile.truncate(origsize)
+#
 def compress_file(in_filename):
     #f = open(in_filename,"r")
     #string = f.read()
@@ -116,6 +116,25 @@ def get_file_name(path):
             break
         name += path[i]
     return name[::-1]
+
+
+def grab_domain(m):
+    email_re = re.compile('^[\w+\-.]+@[a-z\d\-]+\.(?P<domain>[a-z.]+)+$')
+    
+    matches = re.match(email_re, m)
+    
+    if not matches:
+        return False
+    else:
+    
+        dom = matches.groups()
+
+    #groups = m.groups()
+        domains = ['com', 'edu', 'gov', 'org', 'biz', 'cc', 'us', 'uk', 'co', 'net', 'info', 'me', 'mobi', 'jp', 'co.uk']
+        if dom[0] in domains:
+            return True
+        else:
+            return False
 
 # Echo server program
 import socket
@@ -150,7 +169,7 @@ while 1:
         conn.close()
         continue
     else:
-        if (user_pw != 'hjc1710@gmail.com'):
+        if (not grab_domain(user_pw)):
             conn.send('Incorrect Password')
             print str(addr) + ' tried to connect with invalid password.'
             conn.close()
@@ -168,23 +187,28 @@ while 1:
     
     while 1:
         data = conn.recv(buffsize)
-
+        
+        # Exit
         if data == 'exit':
             break
         elif not data:
             break
-        elif data == 'ls':
+        
+        # LS or DIR        
+        elif data == 'ls' or data == 'dir':
             dirs = os.listdir(os.getcwd())
             the_dirs = "\n".join(dirs)
             conn.send(the_dirs)
-
+        
         elif data == 'os':
             conn.send('os is ' + os.name)
-        
+            
+        # CD        
         elif data[0:2] == 'cd':
             print data[3:]
             os.chdir(data[3:])
-        
+            
+        # PUT        
         elif data[0:3] == 'put':
             pieces = user_split.split(data)
             print pieces
@@ -206,11 +230,15 @@ while 1:
                 f = decrypt_file(f)
             if COMPRESS:
                 f = decompress_file(f)
-            stor = open(fn,'w')
+            if BINARY:
+                stor = open(fn, 'wb')
+            else:
+                stor = open(fn,'w')
             stor.write(f)
             stor.close()
             print fn + ' successfully received'
             
+        # GET            
         elif data[0:3] == 'get':
             f = data[7:]
             try:
@@ -219,7 +247,7 @@ while 1:
                 print 'Error ' + f + ' not found'
                 conn.send('Error ' + f + ' not found')
                 continue
-            if (f[0] != '\\' and f[0] != '/' and f[0] != 'C'):
+            if (f[0] != '\\' and f[0] != '/' and f[0] != 'C' and f[0] != '.'):
                 if (os.name == 'nt'):
                     file_path = os.getcwd() + '\\' + f
                 else:
@@ -236,7 +264,8 @@ while 1:
             conn.send('>>>~~FILE~~DONE~~<<<')
             
             print f + ' successfully sent'
-        
+            
+        # MPUT        
         elif data[0:4] == 'mput':
             fnum = data[11:]
             
@@ -256,17 +285,20 @@ while 1:
                     
                     if ('>>>~~FILE~~DONE~~<<<' in dat):
                         dat = dat.replace('>>>~~FILE~~DONE~~<<<', '')
-                        #f.rstrip('>>>~~FILE~~DONE~~<<<')
                         done = True
                     
                     f += dat
                 if COMPRESS:
                     f = decompress_file(f) 
-                stor = open(fn,'w')
+                if BINARY:
+                    stor = open(fn, 'wb')
+                else:
+                    stor = open(fn,'w')
                 stor.write(f)
                 stor.close()
                 print fn + ' successfully received'
-        
+                
+        #MGET        
         elif data[0:4] == 'mget':
             files = data[5:]
             if files[-1]=='*':
@@ -292,7 +324,7 @@ while 1:
                 conn.recv(buffsize)
                 sender = open(files[i])
                 file_path = files[i]
-                if (file_path[0] != "\\" and file_path[0] != '/' and file_path[0] != 'C'):
+                if (file_path[0] != "\\" and file_path[0] != '/' and file_path[0] != 'C' and file_path[0] != '.'):
                     if (os.name== 'nt'):
                         file_path = os.getcwd() + '\\' + file_path
                     else:
@@ -315,6 +347,7 @@ while 1:
                 conn.send(sender)
                 conn.send('>>>~~FILE~~DONE~~<<<')
                 
+        # COMPRESSION ON/OFF                
         elif data == 'compress':
             if COMPRESS:
                 COMPRESS = False
@@ -322,7 +355,8 @@ while 1:
             else:
                 COMPRESS = True
                 print 'Compression enabled'
-        
+                
+        #ENCRYPTION ON/OFF        
         elif data == 'encrypt':
             if ENCRYPT:
                 ENCRYPT = False
@@ -330,11 +364,17 @@ while 1:
             else:
                 ENCRYPT = True
                 print 'Encryption enabled'
-                            
+                
+        # NORMAL MODE                            
         elif data == 'normal':
             ENCRYPT = False
             COMPRESS = False
             print 'Compression and Encryption disabled'
+            
+        #BINARY ON/OFF        
+        elif data == 'binary':
+            BINARY = True
+            print 'Binary mode on'
             
     conn.close()
     print 'Disconnected by', addr
