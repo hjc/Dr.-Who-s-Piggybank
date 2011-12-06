@@ -1,6 +1,6 @@
 from Crypto.Cipher import AES
 import random, struct
-import zlib
+import gzip
 
 #ON SERVER GO INTO GET AND MGET AND ADD CHECKS FOR . AS
 #FILE_PATH[0]
@@ -11,7 +11,7 @@ def encrypt_file(input_string):
     if (size%2) != 0:
         input_string += " "
     for i in xrange(size/2):
-        key += key
+        key += "29"
     input_string = "".join(chr(ord(a)^ord(b))for a,b in zip(input_string,key))
     return input_string
     
@@ -90,25 +90,54 @@ def encrypt_file(input_string):
 #            the_string.truncate(origsize)
 #            return the_string
 
-def compress_file(in_filename, out_filename = None):
+#Function inputs a string and outputs a compressed files
+def compress_file(input_string, is_binary = False):
     #f = open(in_filename,"r")
     #string = f.read()
     #f.close()
-    compr = zlib.compress(in_filename)
+    #compr = glib.compress(in_filename)
     #output = open(out_filename,"w")
     #output.write(compr)
     #output.close()
-    return compr
+    if is_binary:
+        if os.name =='nt':
+            file_name = os.getcwd() + '\tempfileftp.gz'
+            tempfile = gzip.open(file_name,'wb')
+            tempfile.write(input_string)
+            tempfile.close()
+        else:
+            file_name = os.getcwd() + '/tempfileftp.gz'
+            tempfile = gzip.open(file_name,'wb')
+            tempfile.write(input_string)
+            tempfile.close()
+    else:
+        if os.name =='nt':
+            file_name = os.getcwd() + '\tempfileftp.txt.gz'
+            tempfile = gzip.open(file_name ,'wb')
+            tempfile.write(input_string)
+            tempfile.close()
+        else:
+            file_name = os.getcwd() + '/tempfileftp.txt.gz'
+            tempfile = gzip.open(file_name,'wb')
+            tempfile.write(input_string)
+            tempfile.close()
         
-def decompress_file(in_string, out_filename = None):
+    return file_name
+
+#Function inputs a compressed file and outputs a string
+def decompress_file(in_file):
     #f = open(in_filename,"r")
     #string = f.read()
     #f.close()
-    decomp = zlib.decompress(in_string)
+    #decomp = zlib.decompress(in_string)
     #output = open(out_filename,"w")
     #output.write(decomp)
     #output.close()
-    return decomp
+    tempfile = gzip.open(in_file, 'rb')
+    output_string = tempfile.read()
+    tempfile.close()
+    os.remove(in_file)
+    return output_string
 
 
 def get_file_name(path):
@@ -240,17 +269,21 @@ while 1:
                 
                 if (ENCRYPT):
                     print 'First fifteen characters of file before encryption', sender[0:15]
-                    sender = encrypt_file(file_path)
+                    sender = encrypt_file(sender)
                     print 'First fifteen characters of file after encryption', sender[0:15]
                 
                 if (COMPRESS):
                     print 'Length of file before compression:', len(sender)
-                    sender = compress_file(sender)
+                    compressed_file_name = compress_file(sender)
+                    sender = open(compressed_file_name).read()
                     print 'Length of file after compression:', len(sender)
                     #print sender
                     
                 tcpCliSock.send(sender)
                 tcpCliSock.send('>>>~~FILE~~DONE~~<<<')
+                
+                if (COMPRESS):
+                    os.remove(compressed_file_name)
                 
 
         #GET
