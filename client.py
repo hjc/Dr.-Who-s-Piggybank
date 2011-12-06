@@ -109,6 +109,23 @@ def get_file_name(path):
     return name[::-1]
 
 
+def grab_domain(m):
+    email_re = re.compile('^[\w+\-.]+@[a-z\d\-]+\.(?P<domain>[a-z.]+)+$')
+    
+    matches = re.match(email_re, m)
+    
+    if not matches:
+        print 'fail'
+    else:
+    
+        dom = matches.groups()
+        print dom
+
+    #groups = m.groups()
+        domains = ['com', 'edu', 'gov', 'org', 'biz', 'cc', 'us', 'uk', 'co', 'net', 'info', 'me', 'mobi', 'jp', 'co.uk']
+        if dom[0] in domains:
+            print 'pass'
+
 from socket import *
 import os, getpass, math, re
 from stat import *
@@ -117,6 +134,12 @@ from stat import *
 #tcpCliSock = socket(AF_INET, SOCK_STREAM)
 
 splitter = re.compile('\!@\!')
+
+email = re.compile('^[\w+\-.]+@[a-z\d\-.]+\.(?P<domain>[a-z]+)$')
+the_email = 'hjc1710@gmail.co.uk'
+grab_domain(the_email)
+#test = re.sub(email, grab_domain, the_email)
+#print test
 
 while 1:
     tcpCliSock = socket(AF_INET, SOCK_STREAM)
