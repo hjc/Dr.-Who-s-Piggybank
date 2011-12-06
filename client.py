@@ -5,79 +5,90 @@ import zlib
 #ON SERVER GO INTO GET AND MGET AND ADD CHECKS FOR . AS
 #FILE_PATH[0]
 
-def encrypt_file(in_filename, out_filename=None, chunksize=64*1024):
-    """ Encrypts a file using AES (CBC mode) with the
-        given key.
+def encrypt_file(input_string):
+    key = "29"
+    size = len(input_string)
+    if (size%2) != 0:
+        input_string += " "
+    for i in xrange(size/2):
+        key += key
+    input_string = "".join(chr(ord(a)^ord(b))for a,b in zip(input_string,key))
+    return input_string
+    
 
-        key:
-            The encryption key - a string that must be
-            either 16, 24 or 32 bytes long. Longer keys
-            are more secure.
-
-        in_filename:
-            Name of the input file
-
-        out_filename:
-            If None, '<in_filename>.enc' will be used.
-
-        chunksize:
-            Sets the size of the chunk which the function
-            uses to read and encrypt the file. Larger chunk
-            sizes can be faster for some files and machines.
-            chunksize must be divisible by 16.
-    """
-    if not out_filename:
-        out_filename = in_filename + '.enc'
-
-    key = '86309lonh6bvcx34'
-    iv = ''.join(chr(random.randint(0, 0xFF)) for i in range(16))
-    encryptor = AES.new(key, AES.MODE_CBC, iv)
-    filesize = os.path.getsize(in_filename)
-    #filesize = len(in_filename)
-
-    with open(in_filename, 'rb') as infile:
-        with open(out_filename, 'wb') as outfile:
-            outfile.write(struct.pack('<Q', filesize))
-            outfile.write(iv)
-            
-            the_string = ''
-            while True:
-                chunk = infile.read(chunksize)
-                if len(chunk) == 0:
-                    break
-                elif len(chunk) % 16 != 0:
-                    chunk += ' ' * (16 - len(chunk) % 16)
-                the_string += encryptor.encrypt(chunk)
-                #outfile.write(encryptor.encrypt(chunk))
-            return the_string
-
-def decrypt_file(in_filename, out_filename=None, chunksize=24*1024):
-    """ Decrypts a file using AES (CBC mode) with the
-        given key. Parameters are similar to encrypt_file,
-        with one difference: out_filename, if not supplied
-        will be in_filename without its last extension
-        (i.e. if in_filename is 'aaa.zip.enc' then
-        out_filename will be 'aaa.zip')
-    """
-    key = '86309lonh6bvcx34'
-    if not out_filename:
-        out_filename = os.path.splitext(in_filename)[0]
-
-    with open(in_filename, 'rb') as infile:
-        origsize = struct.unpack('<Q', infile.read(struct.calcsize('Q')))[0]
-        iv = infile.read(16)
-        decryptor = AES.new(key, AES.MODE_CBC, iv)
-
-        with open(out_filename, 'wb') as outfile:
-            the_string = ''
-            while True:
-                chunk = infile.read(chunksize)
-                if len(chunk) == 0:
-                    break
-                the_string += decryptor.decrypt(chunk)
-
-            the_string.truncate(origsize)
-            return the_string
+#def encrypt_file(in_filename, out_filename=None, chunksize=64*1024):
+#    """ Encrypts a file using AES (CBC mode) with the
+#        given key.
+#
+#        key:
+#            The encryption key - a string that must be
+#            either 16, 24 or 32 bytes long. Longer keys
+#            are more secure.
+#
+#        in_filename:
+#            Name of the input file
+#
+#        out_filename:
+#            If None, '<in_filename>.enc' will be used.
+#
+#        chunksize:
+#            Sets the size of the chunk which the function
+#            uses to read and encrypt the file. Larger chunk
+#            sizes can be faster for some files and machines.
+#            chunksize must be divisible by 16.
+#    """
+#    if not out_filename:
+#        out_filename = in_filename + '.enc'
+#
+#    key = '86309lonh6bvcx34'
+#    iv = ''.join(chr(random.randint(0, 0xFF)) for i in range(16))
+#    encryptor = AES.new(key, AES.MODE_CBC, iv)
+#    filesize = os.path.getsize(in_filename)
+#    #filesize = len(in_filename)
+#
+#    with open(in_filename, 'rb') as infile:
+#        with open(out_filename, 'wb') as outfile:
+#            outfile.write(struct.pack('<Q', filesize))
+#            outfile.write(iv)
+#            
+#            the_string = ''
+#            while True:
+#                chunk = infile.read(chunksize)
+#                if len(chunk) == 0:
+#                    break
+#                elif len(chunk) % 16 != 0:
+#                    chunk += ' ' * (16 - len(chunk) % 16)
+#                the_string += encryptor.encrypt(chunk)
+#                #outfile.write(encryptor.encrypt(chunk))
+#            return the_string
+#
+#def decrypt_file(in_filename, out_filename=None, chunksize=24*1024):
+#    """ Decrypts a file using AES (CBC mode) with the
+#        given key. Parameters are similar to encrypt_file,
+#        with one difference: out_filename, if not supplied
+#        will be in_filename without its last extension
+#        (i.e. if in_filename is 'aaa.zip.enc' then
+#        out_filename will be 'aaa.zip')
+#    """
+#    key = '86309lonh6bvcx34'
+#    if not out_filename:
+#        out_filename = os.path.splitext(in_filename)[0]
+#
+#    with open(in_filename, 'rb') as infile:
+#        origsize = struct.unpack('<Q', infile.read(struct.calcsize('Q')))[0]
+#        iv = infile.read(16)
+#        decryptor = AES.new(key, AES.MODE_CBC, iv)
+#
+#        with open(out_filename, 'wb') as outfile:
+#            the_string = ''
+#            while True:
+#                chunk = infile.read(chunksize)
+#                if len(chunk) == 0:
+#                    break
+#                the_string += decryptor.decrypt(chunk)
+#
+#            the_string.truncate(origsize)
+#            return the_string
 
 def compress_file(in_filename, out_filename = None):
     #f = open(in_filename,"r")
@@ -111,20 +122,18 @@ def get_file_name(path):
 
 def grab_domain(m):
     email_re = re.compile('^[\w+\-.]+@[a-z\d\-]+\.(?P<domain>[a-z.]+)+$')
-    
     matches = re.match(email_re, m)
     
     if not matches:
-        print 'fail'
+        return False    
     else:
-    
         dom = matches.groups()
-        print dom
-
-    #groups = m.groups()
+        
         domains = ['com', 'edu', 'gov', 'org', 'biz', 'cc', 'us', 'uk', 'co', 'net', 'info', 'me', 'mobi', 'jp', 'co.uk']
         if dom[0] in domains:
-            print 'pass'
+            return True
+        else:
+            return False
 
 from socket import *
 import os, getpass, math, re
@@ -134,12 +143,6 @@ from stat import *
 #tcpCliSock = socket(AF_INET, SOCK_STREAM)
 
 splitter = re.compile('\!@\!')
-
-email = re.compile('^[\w+\-.]+@[a-z\d\-.]+\.(?P<domain>[a-z]+)$')
-the_email = 'hjc1710@gmail.co.uk'
-grab_domain(the_email)
-#test = re.sub(email, grab_domain, the_email)
-#print test
 
 while 1:
     tcpCliSock = socket(AF_INET, SOCK_STREAM)
@@ -204,7 +207,7 @@ while 1:
             data = raw_input('Enter a command ')
 
         #LS
-            if data[0:2] == 'ls':
+            if data[0:2] == 'ls' or data[0:3] == 'dir':
                 tcpCliSock.send(data)
                 new_dat = tcpCliSock.recv(BUFSIZ)
                 print new_dat
@@ -223,7 +226,10 @@ while 1:
                         file_path = os.getcwd() + '/' + file_path
                         
                 try:
-                    sender = open(file_path).read()
+                    if (BINARY):
+                        sender = open(file_path, 'rb').read()
+                    else:
+                        sender = open(file_path).read()
                     
                 except:
                     print 'File located at: ' + file_path + ' not found.'
@@ -348,8 +354,11 @@ while 1:
                         else:
                             file_path = os.getcwd() + '/' + file_path
                             
-                    try:        
-                        sender = open(file_path).read()
+                    try:
+                        if (BINARY):
+                            sender = open(file_path, 'rb').read()
+                        else:
+                            sender = open(file_path).read()
                         
                     except:
                         print 'File located at: ' + file_path + ' not found. Ignoring and moving on.'
@@ -438,7 +447,12 @@ while 1:
                 COMPRESS = False
                 ENCRYPT = False
                 print 'Encryption and compression disabled'
-
+                
+        #BINARY
+            elif  data == 'binary':
+                tcpCliSock.send(data)
+                BINARY = True
+                print 'Enabled binary mode'
 
         #EXIT
             #needs to become quit
