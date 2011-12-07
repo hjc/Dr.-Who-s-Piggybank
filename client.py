@@ -1,6 +1,6 @@
 from Crypto.Cipher import AES
 import random, struct
-import gzip
+import gzip, zlib
 
 #ON SERVER GO INTO GET AND MGET AND ADD CHECKS FOR . AS
 #FILE_PATH[0]
@@ -101,7 +101,7 @@ def compress_file(input_string, is_binary = False):
     #output.close()
     if is_binary:
         if os.name =='nt':
-            file_name = os.getcwd() + '\tempfileftp.gz'
+            file_name = os.getcwd() + '\\tempfileftp.gz'
             tempfile = gzip.open(file_name,'wb')
             tempfile.write(input_string)
             tempfile.close()
@@ -112,7 +112,7 @@ def compress_file(input_string, is_binary = False):
             tempfile.close()
     else:
         if os.name =='nt':
-            file_name = os.getcwd() + '\tempfileftp.txt.gz'
+            file_name = os.getcwd() + '\\tempfileftp.txt.gz'
             tempfile = gzip.open(file_name ,'wb')
             tempfile.write(input_string)
             tempfile.close()
@@ -150,7 +150,7 @@ def get_file_name(path):
 
 
 def grab_domain(m):
-    email_re = re.compile('^[\w+\-.]+@[a-z\d\-]+\.(?P<domain>[a-z.]+)+$')
+    email_re = re.compile('^[\w+\-.]+@[A-Za-z\d\-]+\.(?P<domain>[a-z.]+)+$')
     matches = re.match(email_re, m)
     
     if not matches:
@@ -170,6 +170,13 @@ from stat import *
 
 #need to make it so ls can accept arguments (done server-side)
 #tcpCliSock = socket(AF_INET, SOCK_STREAM)
+
+#datum = open('pg2600.txt').read()
+#temp_fn = compress_file(datum)
+#print open(temp_fn).read()
+#string2 = decompress_file(temp_fn)
+#raw_input()
+#print string2
 
 splitter = re.compile('\!@\!')
 
@@ -275,7 +282,7 @@ while 1:
                 if (COMPRESS):
                     print 'Length of file before compression:', len(sender)
                     compressed_file_name = compress_file(sender)
-                    sender = open(compressed_file_name).read()
+                    sender = open(compressed_file_name, 'rb').read()
                     print 'Length of file after compression:', len(sender)
                     #print sender
                     
@@ -312,18 +319,30 @@ while 1:
                             dat = dat.replace('>>>~~FILE~~DONE~~<<<', '')
                             done = True
                         file_data += dat
+                    #print file_data
                     #for i in range(0, int(packets)):
                     #    file_data += tcpCliSock.recv(BUFSIZ)
                     
                     if '.' not in fn:
                         fn += '.txt'
                     
-                    
-                    writer = open(fn, 'w')
-                    
                     if COMPRESS:
-                        file_data = decompress_file(file_data)
+                        if os.name == 'nt':
+                            temp_fp = os.getcwd() + '\\temp_file.gzip'
+                        else:
+                            temp_fp = os.getcwd() + '/temp_file.gzip'
+                        temp = open(temp_fp, 'wb')
+                        temp.write(file_data)
+                        temp.close()
+                        file_data = decompress_file(temp_fp)
+                        
+                    if ENCRYPT:
+                        file_data = encrypt_file(file_data)
                     
+                    if BINARY:
+                        writer = open(fn, 'wb')
+                    else:
+                        writer = open(fn, 'w')
                     writer.write(file_data)
                     writer.close()
                     
@@ -402,13 +421,22 @@ while 1:
                     print file_descriptor
                     tcpCliSock.send(file_descriptor)
                     
+                    if (ENCRYPT):
+                        print 'First fifteen characters of file before encryption', sender[0:15]
+                        sender = encrypt_file(sender)
+                        print 'First fifteen characters of file after encryption', sender[0:15]
+                    
                     if (COMPRESS):
-                        print 'Length of file:', fn, 'is:', len(sender), 'before compression.'
-                        sender = compress_file(sender)
-                        print 'Length of file:', fn, 'is:', len(sender), 'after compression.'
+                        print 'Length of file before compression:', len(sender)
+                        compressed_file_name = compress_file(sender)
+                        sender = open(compressed_file_name, 'rb').read()
+                        print 'Length of file after compression:', len(sender)
                     
                     tcpCliSock.send(sender)
                     tcpCliSock.send('>>>~~FILE~~DONE~~<<<')
+                    
+                    if COMPRESS:
+                        os.remove(compressed_file_name)
                     #send sender
 
 
@@ -442,11 +470,24 @@ while 1:
                             dat = dat.replace('>>>~~FILE~~DONE~~<<<', '')
                             
                         f += dat
-                    stor = open(fn, 'w')
+                    
                     
                     if COMPRESS:
-                        f = decompress_file(f)
+                        if os.name == 'nt':
+                            temp_fp = os.getcwd() + '\\temp_file.gzip'
+                        else:
+                            temp_fp = os.getcwd() + '/temp_file.gzip'
+                        temp = open(temp_fp, 'wb')
+                        temp.write(f)
+                        temp.close()
+                        f = decompress_file(temp_fp)
+                    if ENCRYPT:
+                        f = encrypt_file(f)
                     
+                    if BINARY:
+                        stor = open(fn, 'wb')
+                    else:
+                        stor = open(fn, 'wb')
                     stor.write(f)
                     stor.close()
                     print fn, 'successfully received.'
@@ -486,11 +527,18 @@ while 1:
                 tcpCliSock.send(data)
                 BINARY = True
                 print 'Enabled binary mode'
+            
+        #ASCII
+            elif data == 'ascii':
+                tcpCliSock.send(data)
+                BINARY = False
+                print 'Disabled binary mode'
 
         #EXIT
             #needs to become quit
-            elif data == 'exit':
+            elif data == 'exit' or data == 'quit':
                 tcpCliSock.send(data)
+                print tcpCliSock.recv(BUFSIZ)
                 break
         
         has_data = True
