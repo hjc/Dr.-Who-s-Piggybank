@@ -143,23 +143,27 @@ while 1:
         elif data == 'ls' or data == 'dir':
             dirs = os.listdir(os.getcwd())
             the_dirs = "\n".join(dirs)
-            conn.send(the_dirs)
+            conn.send('Current directory is: ' + os.getcwd() + '\n' + the_dirs)
         
         elif data == 'os':
             conn.send('os is ' + os.name)
             
         # CD        
         elif data[0:2] == 'cd':
-            print data[3:]
-            os.chdir(data[3:])
+            print 'Directory changed to ' + data[3:]
+            try:
+                os.chdir(data[3:])
+                conn.send('Directory changed to ' + data[3:])
+            except:
+                conn.send('Directory ' + data[3:] + ' not found')
             
         # PUT        
         elif data[0:3] == 'put':
             pieces = user_split.split(data)
             print pieces
             fn = pieces[0][7:]
-            if '.' not in fn:
-                fn += '.txt'
+            #if '.' not in fn:
+                #fn += '.txt'
             f = ''
             done = False
             while (not done):
@@ -244,8 +248,8 @@ while 1:
                 pieces = user_split.split(data)
                 fn = pieces[0][7:]
                 print fn
-                if '.' not in fn:
-                    fn += '.txt'
+                #if '.' not in fn:
+                    #fn += '.txt'
                 f = ''
                 done = False
                 while (not done):
@@ -301,7 +305,7 @@ while 1:
             
             for i in range (0,len(files)):
                 conn.recv(buffsize)
-                sender = open(files[i])
+                #sender = open(files[i])
                 file_path = files[i]
                 if (file_path[0] != "\\" and file_path[0] != '/' and file_path[0] != 'C' and file_path[0] != '.'):
                     if (os.name== 'nt'):
@@ -314,8 +318,9 @@ while 1:
                     else:
                         sender = open(file_path).read()
                 except:
-                    print 'File located at: ' + file_path + ' not found.  Ignoring \
-                    and moving on.'
+                    print 'File located at: ' + file_path + ' not found.  Canceling MGET.'
+                    conn.send('>>>~~FILE~~NOT~~FOUND<<<' + get_file_name(file_path))
+                    break
                 
                 file_descriptor = 'get FN:' + get_file_name(file_path)
                 fn = get_file_name(file_path)
