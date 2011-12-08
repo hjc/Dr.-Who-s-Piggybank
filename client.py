@@ -59,29 +59,6 @@ def get_file_name(path):
         name += path[i]
     return name[::-1]
 
-
-#def grab_domain(m):
-#    email_re = re.compile('^[\w+\-.]+@[A-Za-z\d\-]+\.(?P<domain>[a-z.]+)+$')
-#    matches = re.match(email_re, m)
-#    
-#    if not matches:
-#        return False    
-#    else:
-#        dom = matches.groups()
-#        
-#        domains = ['com', 'edu', 'gov', 'org', 'biz', 'cc', 'us', 'uk', 'co', 'net', 'info', 'me', 'mobi', 'jp', 'co.uk']
-#        if dom[0] in domains:
-#            return True
-#        else:
-#            return False
-
-
-#TODO:
-        #have confirmation for the cd command
-        #Maybe remove adding .txt if a file has no extensions
-        #In MPUT, in check for wildcard, strip spaces from the end
-        #Output successfully sent put files for PUT and MPUT
-
 #Necessary imports 
 from socket import *
 import os, getpass, math, re
@@ -200,6 +177,9 @@ while 1:
                 #simple command to implement, just send the enter user input
                 #command, server handles the rest
                 tcpCliSock.send(data)
+                
+                new_dat = tcpCliSock.recv(BUFSIZ)
+                print new_dat
 
         #PUT
             elif data[0:3] == 'put':
@@ -365,10 +345,11 @@ while 1:
                         #Build file contents
                         file_data += dat
 
+                    #Chose not to do this
                     #If our filename came without any extensions, add a .txt for
                     #easy opening and compatibility.
-                    if '.' not in fn:
-                        fn += '.txt'
+#                    if '.' not in fn:
+#                        fn += '.txt'
 
                     #If the compress falg is set, we need to decompress
                     if COMPRESS:
@@ -480,10 +461,9 @@ while 1:
                             files.append(this_path)
 
                     #Print statement to summarize what files will be sent
-                    print 'We will send files: ',
+                    print 'We will send files: '
                     for item in files:
-                        print item,
-                    print
+                        print item
 
                 #Means there is no wildcard, so just split the files string,
                 #which is the mput input minus mput
@@ -625,14 +605,19 @@ while 1:
                     #us the name of the next file
                     data = tcpCliSock.recv(BUFSIZ)
                     
+                    if '>>>~~FILE~~NOT~~FOUND<<<' in data:
+                        print 'File:', data[24:], 'not found'
+                        break
+                    
                     #Split the file descriptor and get the incoming file name
                     pieces = splitter.split(data)
                     fn = pieces[0][7:]
                     
+                    #Chose not to do this
                     #If this is a file without an extension, save as a .txt
                     #for compatibility
-                    if '.' not in fn:
-                        fn += '.txt'
+#                    if '.' not in fn:
+#                        fn += '.txt'
                     
                     #f will hold the incoming file's data and done will tell
                     #the file loop when to end    
