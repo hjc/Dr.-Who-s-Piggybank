@@ -96,24 +96,30 @@ while 1:
     conn, addr = s.accept()
     
     conn.send('pwd')
-    user = conn.recv(buffsize)
-    user_info = user_split.split(user)
-    user_name = user_info[0][5:]
-    user_pw = user_info[1][9:]
     
-    if (user_name != 'anonymous'):
-        conn.send('Incorrect Username')
-        print str(addr) + ' tried to connect with invalid user name: ' + user_name
-        conn.close()
-        continue
-    else:
-        if (not grab_domain(user_pw)):
-            conn.send('Incorrect Password')
-            print str(addr) + ' tried to connect with invalid password.'
-            conn.close()
+    entry = False
+    while (not entry):
+        user = conn.recv(buffsize)
+        user_info = user_split.split(user)
+        user_name = user_info[0][5:]
+        user_pw = user_info[1][9:]
+        
+        if (user_name != 'anonymous'):
+            conn.send('Error: Incorrect Username')
+            print str(addr) + ' tried to connect with invalid user name: ' + user_name
+            #conn.close()
             continue
         else:
-            conn.send('entry')
+            user_pw = encrypt_file(user_pw).strip()
+            
+            if (not grab_domain(user_pw)):
+                conn.send('Error: Incorrect Password')
+                print str(addr) + ' tried to connect with invalid password.'
+                #conn.close()
+                continue
+            else:
+                entry = True
+                conn.send('entry')
     
     print 'Connected by', addr
     
