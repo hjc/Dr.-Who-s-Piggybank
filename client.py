@@ -60,25 +60,23 @@ def get_file_name(path):
     return name[::-1]
 
 
-def grab_domain(m):
-    email_re = re.compile('^[\w+\-.]+@[A-Za-z\d\-]+\.(?P<domain>[a-z.]+)+$')
-    matches = re.match(email_re, m)
-    
-    if not matches:
-        return False    
-    else:
-        dom = matches.groups()
-        
-        domains = ['com', 'edu', 'gov', 'org', 'biz', 'cc', 'us', 'uk', 'co', 'net', 'info', 'me', 'mobi', 'jp', 'co.uk']
-        if dom[0] in domains:
-            return True
-        else:
-            return False
+#def grab_domain(m):
+#    email_re = re.compile('^[\w+\-.]+@[A-Za-z\d\-]+\.(?P<domain>[a-z.]+)+$')
+#    matches = re.match(email_re, m)
+#    
+#    if not matches:
+#        return False    
+#    else:
+#        dom = matches.groups()
+#        
+#        domains = ['com', 'edu', 'gov', 'org', 'biz', 'cc', 'us', 'uk', 'co', 'net', 'info', 'me', 'mobi', 'jp', 'co.uk']
+#        if dom[0] in domains:
+#            return True
+#        else:
+#            return False
 
 
-#TODO: Remove splitter from client
-        #encrypt password before sending
-        #have a loop setup so that if we fail login, we can just try again and don't have to reenter host and port info
+#TODO:
         #have confirmation for the cd command
         #Maybe remove adding .txt if a file has no extensions
         #In MPUT, in check for wildcard, strip spaces from the end
@@ -88,6 +86,7 @@ def grab_domain(m):
 from socket import *
 import os, getpass, math, re
 from stat import *
+#from glob import glob
 
 splitter = re.compile('\!@\!')
 
@@ -135,7 +134,7 @@ while 1:
 
         #pwd is the packet sent that requests the client for their
         #user name and password so we can authenticate them
-        if new_dat == 'pwd':
+        if new_dat == 'pwd' or new_dat[0:5] == 'Error':
 
             #server is currently setup only to deal with anonymous users
             user_name = raw_input("Please enter a user name: ")
@@ -144,8 +143,8 @@ while 1:
             #passwords that are entered without echoing (press a key
             #and nothing is printed in the terminal)
             pw = getpass.getpass()
-            
-            #remember to encrypt pw!
+            #Encrypt the pw for safety
+            pw = encrypt_file(pw)
             user_string = 'USER:' + user_name + '!@!PASSWORD:' + pw 
 
             #Send username and password to server to process
@@ -167,7 +166,10 @@ while 1:
                 COMPRESS = False
                 BINARY = False
                 continue
-
+            elif new_dat[0:5] == 'Error':
+                print new_dat
+                print 'Try again'
+                continue
             #authentication failed, either we used a username other than
             #anonymous or entered an invalid email
             else:
@@ -426,9 +428,15 @@ while 1:
                 #to send
                 files = data[5:]
 
+                
+
                 #Check to see if there was a wildcard passed in, see if it is at
                 #the end of a file path or alone
                 if files[-1] == '*':
+                #if '*' in files:
+                    
+                    #files2 = glob(files)
+                    #print files
 
                     #If there is a wild card, get the file path for the directory
                     #we want so we can send the right files, done by just removing
@@ -457,8 +465,10 @@ while 1:
                             #removing the wildcard) + the contents of the directory
                             #located at file_path
                             this_path = file_path + '\\' + contents[i]
+                            #this_path = files2[i]
                         else:
                             this_path = file_path + '/' + contents[i]
+                            #this_path = files2[i]
 
                         #Use os.stat to determine if this path contains a directory
                         #or file
@@ -473,6 +483,7 @@ while 1:
                     print 'We will send files: ',
                     for item in files:
                         print item,
+                    print
 
                 #Means there is no wildcard, so just split the files string,
                 #which is the mput input minus mput
