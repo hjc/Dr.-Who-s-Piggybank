@@ -1,10 +1,9 @@
-#from Crypto.Cipher import AES
 import os,random, struct
 #import zlib
 import gzip
 
 
-
+#Function inputs a string and encrypts it
 def encrypt_file(input_string):
     key = "29"
     size = len(input_string)
@@ -15,15 +14,8 @@ def encrypt_file(input_string):
     input_string = "".join(chr(ord(a)^ord(b))for a,b in zip(input_string,key))
     return input_string
 
+#Function inputs a string and outputs a compressed file
 def compress_file(input_string, is_binary = False):
-    #f = open(in_filename,"r")
-    #string = f.read()
-    #f.close()
-    #compr = glib.compress(in_filename)
-    #output = open(out_filename,"w")
-    #output.write(compr)
-    #output.close()
-    #print input_string
     if is_binary:
         if os.name =='nt':
             file_name = os.getcwd() + '\\tempfileftp.gz'
@@ -39,142 +31,22 @@ def compress_file(input_string, is_binary = False):
         if os.name =='nt':
             file_name = os.getcwd() + '\\tempfileftp.txt.gz'
             tempfile = gzip.open(file_name ,'wb')
-            #tempfile = gzip.open('test.txt','wb')
             tempfile.write(input_string)
             tempfile.close()
         else:
             file_name = os.getcwd() + '/tempfileftp.txt.gz'
             tempfile = gzip.open(file_name,'wb')
             tempfile.write(input_string)
-            tempfile.close()
-    #print open(file_name).read()
-    #file_name = 'test.txt'    
+            tempfile.close()    
     return file_name
 
 #Function inputs a compressed file and outputs a string
 def decompress_file(in_file):
-    #f = open(in_filename,"r")
-    #string = f.read()
-    #f.close()
-    #decomp = zlib.decompress(in_string)
-    #output = open(out_filename,"w")
-    #output.write(decomp)
-    #output.close()
     tempfile = gzip.open(in_file, 'rb')
     output_string = tempfile.read()
     tempfile.close()
     os.remove(in_file)
     return output_string
-
-
-
-#
-#def encrypt_file(in_filename, out_filename=None, chunksize=64*1024):
-#    """ Encrypts a file using AES (CBC mode) with the
-#        given key.
-#
-#        key:
-#            The encryption key - a string that must be
-#            either 16, 24 or 32 bytes long. Longer keys
-#            are more secure.
-#
-#        in_filename:
-#            Name of the input file
-#
-#        out_filename:
-#            If None, '<in_filename>.enc' will be used.
-#
-#        chunksize:
-#            Sets the size of the chunk which the function
-#            uses to read and encrypt the file. Larger chunk
-#            sizes can be faster for some files and machines.
-#            chunksize must be divisible by 16.
-#    """
-#    
-#    key = '86309lonh6bdcx34'
-#    
-#    if not out_filename:
-#        out_filename = in_filename + '.enc'
-#
-#    iv = ''.join(chr(random.randint(0, 0xFF)) for i in range(16))
-#    encryptor = AES.new(key, AES.MODE_CBC, iv)
-#    filesize = os.path.getsize(in_filename)
-#    #filesize = len(in_filename)
-#
-#    with open(in_filename, 'rb') as infile:
-#        with open(out_filename, 'wb') as outfile:
-#            outfile.write(struct.pack('<Q', filesize))
-#            outfile.write(iv)
-#            
-#            the_string = ''
-#
-#            while True:
-#                chunk = infile.read(chunksize)
-#                if len(chunk) == 0:
-#                    break
-#                elif len(chunk) % 16 != 0:
-#                    chunk += ' ' * (16 - len(chunk) % 16)
-#                the_string += encryptor.encrypt(chunk)
-#
-#                #outfile.write(encryptor.encrypt(chunk))
-#            return(the_string)
-#
-#def decrypt_file(in_filename, out_filename=None, chunksize=24*1024):
-#    """ Decrypts a file using AES (CBC mode) with the
-#        given key. Parameters are similar to encrypt_file,
-#        with one difference: out_filename, if not supplied
-#        will be in_filename without its last extension
-#        (i.e. if in_filename is 'aaa.zip.enc' then
-#        out_filename will be 'aaa.zip')
-#    """
-#    key = '86309lonh6bdcx34'
-#    
-#    if not out_filename:
-#        out_filename = os.path.splitext(in_filename)[0]
-#
-##    with open(in_filename, 'rb') as infile:
-##        origsize = struct.unpack('<Q', infile.read(struct.calcsize('Q')))[0]
-##        iv = infile.read(16)
-#    decryptor = AES.new(key, AES.MODE_CBC)
-##
-##        with open(out_filename, 'wb') as outfile:
-##            the_string = ''
-##            while True:
-##                chunk = infile.read(chunksize)
-##                if len(chunk) == 0:
-##                    break
-#    the_string = decryptor.decrypt(in_filename)
-#            
-##            the_string.truncate(origsize)
-#    return the_string
-#                
-#                #outfile.write(decryptor.decrypt(chunk))
-#
-#            #outfile.truncate(origsize)
-#
-#def compress_file(in_filename):
-#    #f = open(in_filename,"r")
-#    #string = f.read()
-#    #f.close()
-#    compr = zlib.compress(in_filename)
-#    #output = open(in_filename,"w")
-#    #output.write(compr)
-#    #output.close()
-#    return compr
-#        
-#def decompress_file(in_string):
-#    #f = open(in_filename,"r")
-#    #string = f.read()
-#    #f.close()
-#    decomp = zlib.decompress(in_string)
-#    #output = open(in_filename,"w")
-#    #output.write(decomp)
-#    #output.close()
-#    return decomp
-
-
-
-
 
 def get_file_name(path):
     name = ''
@@ -184,7 +56,7 @@ def get_file_name(path):
         name += path[i]
     return name[::-1]
 
-
+# Function to check for valid email address in password
 def grab_domain(m):
     email_re = re.compile('^[\w+\-.]+@[A-Za-z\d\-]+\.(?P<domain>[a-z.]+)+$')
     
@@ -196,7 +68,6 @@ def grab_domain(m):
     
         dom = matches.groups()
 
-    #groups = m.groups()
         domains = ['com', 'edu', 'gov', 'org', 'biz', 'cc', 'us', 'uk', 'co', 'net', 'info', 'me', 'mobi', 'jp', 'co.uk']
         if dom[0] in domains:
             return True
@@ -209,14 +80,6 @@ import os
 import re
 from math import ceil
 from stat import *
-
-#datum = open('pg76.txt').read()
-#temp_fn = compress_file(datum)
-#print open(temp_fn, 'rb').read()
-#raw_input()
-#string2 = decompress_file(temp_fn)
-#
-#print string2
 
 HOST = socket.gethostbyname(socket.gethostname())
 PORT = 50007
@@ -312,8 +175,6 @@ while 1:
                 temp.write(f)
                 temp.close()
                 f = decompress_file(temp_fp)
-                #print f
-                #os.remove(temp_fp)
             
             if ENCRYPT:
                 f = encrypt_file(f)
@@ -357,7 +218,6 @@ while 1:
                 print 'Length of file before compression: ', len(f_open)
                 compressed_file_name = compress_file(f_open)
                 f_open = open(compressed_file_name, 'rb').read()
-                #print f_open
                 print 'Length of file after compression: ', len(f_open)
             conn.send(f_open)
             conn.send('>>>~~FILE~~DONE~~<<<')
@@ -465,7 +325,6 @@ while 1:
                     print 'Length of file before compression: ', len(sender)
                     compressed_file_name = compress_file(sender)
                     sender = open(compressed_file_name, 'rb').read()
-                    #print f_open
                     print 'Length of file after compression: ', len(sender)
                 conn.send(sender)
                 conn.send('>>>~~FILE~~DONE~~<<<')
