@@ -1,6 +1,7 @@
 import random, struct
 import gzip, zlib
 
+#Simple xor encryption on a string
 def encrypt_file(input_string):
     key = "29"
     size = len(input_string)
@@ -591,103 +592,193 @@ while 1:
 
         #MGET
             elif data[0:4] == 'mget':
-                files = data[0:5]
+                
+                #Send entire command
                 tcpCliSock.send(data)
                 
+                #Wait for the server to send us a mutliple file file descriptor 
+                #which will tell us how many files we are receiving
                 data = tcpCliSock.recv(BUFSIZ)
+                
+                #Grabs the number of files from the file descriptor
                 fnum = data[11:]
                 
+                #Begin transfer loop
                 for i in range(0, int(fnum)):
+                    
+                    #Packet we send to the server to let it know we are ready
+                    #to receive.
                     tcpCliSock.send('begin transfer number: ' + str(i))
                     
+                    #Now, we will get a single file descriptor that will tell 
+                    #us the name of the next file
                     data = tcpCliSock.recv(BUFSIZ)
                     
+                    #Split the file descriptor and get the incoming file name
                     pieces = splitter.split(data)
                     fn = pieces[0][7:]
                     
+                    #If this is a file without an extension, save as a .txt
+                    #for compatibility
                     if '.' not in fn:
                         fn += '.txt'
-                        
+                    
+                    #f will hold the incoming file's data and done will tell
+                    #the file loop when to end    
                     f = ''
                     done = False
                     
+                    #file loop
                     while(not done):
+                        
+                        #Receive data
                         dat = tcpCliSock.recv(BUFSIZ)
                         
+                        #See if data has end of file packet in it
                         if ('>>>~~FILE~~DONE~~<<<' in dat):
+                            
+                            #It does, so make done true so we can get out of
+                            #the data loop and remove the end of file string
+                            #from the buffer
                             done = True
                             dat = dat.replace('>>>~~FILE~~DONE~~<<<', '')
                             
+                        #concat the new data to the working buffer
                         f += dat
                     
-                    
+                    #Like put, we encrypt and then compress for get (on the
+                    #server side), so we must compress before we decrypt on
+                    #the client side, so uncompress
                     if COMPRESS:
+                        
+                        #Get right file paths
                         if os.name == 'nt':
                             temp_fp = os.getcwd() + '\\temp_file.gzip'
                         else:
                             temp_fp = os.getcwd() + '/temp_file.gzip'
+                            
+                        #Always open in binary for OS safety
                         temp = open(temp_fp, 'wb')
+                        
+                        #Write file and close it
                         temp.write(f)
                         temp.close()
+                        
+                        #Because of how decompress_file works, it needs a file
+                        #name, this is because it will open that file with gzip
+                        #which is what decompress, so pass it the file path
                         f = decompress_file(temp_fp)
+                        
+                    #If encrypt, then do XOR decrypt
                     if ENCRYPT:
                         f = encrypt_file(f)
                     
+                    #If binary, be sure to write in binary mode
                     if BINARY:
                         stor = open(fn, 'wb')
+                        
+                    #Write normally otherwise
                     else:
-                        stor = open(fn, 'wb')
+                        stor = open(fn, 'w')
+                        
+                    #Actually write the file and save it
                     stor.write(f)
                     stor.close()
+                    
+                    #Print completion method
                     print fn, 'successfully received.'
                 
 
         #COMPRESS
+            #If this command is entered, we toggle compression mode on or off
             elif data == 'compress':
+                
+                #Tell the server what we are doing
                 tcpCliSock.send(data)
+                
+                #Compression is on, turn it off
                 if COMPRESS:
                     COMPRESS = False
                     print 'Compression disabled'
+                    
+                #Compression is off, turn it on
                 else:
                     COMPRESS = True
                     print 'Compression enabled'
 
 
-        #ENCRYPT   
+        #ENCRYPT
+            #If this command is entered, we toggle encryption on or off
             elif data == 'encrypt':
+                
+                #Tell the server what we are doing
                 tcpCliSock.send(data)
+                
+                #Encryption is on, turn it off
                 if ENCRYPT:
                     ENCRYPT = False
                     print 'Encryption disabled'
+                
+                #Encryption is off, turn it on
                 else:
                     ENCRYPT = True
                     print 'Encryption enabled'
 
 
-        #NORMAL      
+        #NORMAL
+            #This command turns both encryption and compression off
             elif data == 'normal':
+                
+                #Tell server what we are doing
                 tcpCliSock.send(data)
+                
+                #Turn off compression and encryption, print confirmation messages
                 COMPRESS = False
                 ENCRYPT = False
                 print 'Encryption and compression disabled'
                 
         #BINARY
+            #This command turns on binary mode, which passes data through as is,
+            #ignoring OS dependent conversions (mainly EOL conversions), which
+            #mess up transferring images and executables
             elif  data == 'binary':
+                
+                #Tell server what we are doing
                 tcpCliSock.send(data)
+                
+                #Turn on Binary, print confirmation message
                 BINARY = True
                 print 'Enabled binary mode'
             
         #ASCII
+            #Turns off binary mode. Because we are using Python, it will automatically
+            #use the write EOL's and other OS dependent conversions when writing
+            #a file, so this just turns off a bool
             elif data == 'ascii':
+                
+                #Tell server what we are doing
                 tcpCliSock.send(data)
+                
+                #Turn off Binary, print confirmation message
                 BINARY = False
                 print 'Disabled binary mode'
 
-        #EXIT
-            #needs to become quit
+        #QUIT
+            #Breaks us out of the data loop and puts us back into the connection
+            #loop so we can connect to a new server, breaking us out of data loop
+            #will close socket
             elif data == 'exit' or data == 'quit':
+                
+                #Tell server to close everything
                 tcpCliSock.send(data)
+                
+                #Receive a confirmation from server and break from loop
                 print tcpCliSock.recv(BUFSIZ)
                 break
+            
+            #User entered a command we do not process
+            else:
+                print 'Unrecognized command. Enter another.'
     
+    #User entered a quit command, close socket
     tcpCliSock.close()
